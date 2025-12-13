@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Tracker API - 25 Nutrients. One Call. Zero Parsing.</title>
+    <meta name="description"
+        content="The nutrition API that gives you 25+ nutrients in the free tier. Natural language input, USDA data, hierarchical fat breakdown. Built for developers.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --primary-light: #34d399;
+            --secondary: #6366f1;
+            --accent: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f8fafc;
+            --gradient: linear-gradient(135deg, #10b981 0%, #6366f1 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark);
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark);
+            z-index: -2;
+        }
+
+        .bg-gradient::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            50% {
+                transform: translate(-20px, -20px) rotate(5deg);
+            }
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(20px);
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--gradient);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.3);
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 900px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero h1 span {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .secondary-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 4rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--gray);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: var(--dark-light);
+            border-radius: 24px;
+            padding: 3rem;
+            margin: 4rem auto;
+            max-width: 1000px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+
+        .demo-input h3,
+        .demo-output h3 {
+            font-size: 1rem;
+            color: var(--gray);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .code-block {
+            background: var(--dark);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .json-key {
+            color: #f472b6;
+        }
+
+        .json-string {
+            color: #34d399;
+        }
+
+        .json-number {
+            color: #fbbf24;
+        }
+
+        .json-bracket {
+            color: #94a3b8;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2rem;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1.25rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .comparison-table th {
+            background: var(--dark-light);
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table td:first-child {
+            font-weight: 600;
+        }
+
+        .check {
+            color: var(--primary);
+        }
+
+        .cross {
+            color: #ef4444;
+        }
+
+        .highlight-cell {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .fat-breakdown {
+            background: var(--dark-light);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-top: 4rem;
+        }
+
+        .fat-bar {
+            display: flex;
+            height: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .fat-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .fat-saturated {
+            background: #ef4444;
+            flex: 1.01;
+        }
+
+        .fat-mono {
+            background: #f59e0b;
+            flex: 1.24;
+        }
+
+        .fat-poly {
+            background: #10b981;
+            flex: 0.77;
+        }
+
+        .fat-other {
+            background: #6366f1;
+            flex: 0.55;
+        }
+
+        .fat-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .pricing-card {
+            background: var(--dark-light);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+            position: relative;
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient);
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .pricing-card.popular:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .pricing-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 1rem 0;
+        }
+
+        .pricing-price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gray);
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pricing-features li i {
+            color: var(--primary);
+        }
+
+        .usda-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border-radius: 24px;
+            padding: 4rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .usda-logos {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+            opacity: 0.6;
+        }
+
+        .usda-logo {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray);
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 6rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1.5rem;
+        }
+
+        .cta-section p {
+            color: var(--gray);
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .big-cta {
+            font-size: 1.25rem;
+            padding: 1.25rem 3rem;
+        }
+
+        footer {
+            background: var(--dark-light);
+            padding: 4rem 2rem 2rem;
+            text-align: center;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .copyright {
+            color: var(--gray);
+            font-size: 0.875rem;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+
+    <nav>
+        <div class="logo">🥗 NutritionAPI</div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#demo">Demo</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#compare">Compare</a></li>
+        </ul>
+        <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button"
+            target="_blank">
+            Get API Key <i class="fas fa-arrow-right"></i>
+        </a>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="badge fade-in">
+                <i class="fas fa-bolt"></i> Now Live on RapidAPI
+            </div>
+            <h1 class="fade-in delay-1">
+                <span>25 Nutrients.</span><br>
+                One API Call.<br>
+                Zero Parsing.
+            </h1>
+            <p class="fade-in delay-2">
+                The nutrition API that gives you protein, vitamins, and minerals in the <strong>free tier</strong>.
+                Natural language input. USDA data. Built for developers who ship fast.
+            </p>
+            <div class="hero-buttons fade-in delay-3">
+                <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button"
+                    target="_blank">
+                    Start Free <i class="fas fa-rocket"></i>
+                </a>
+                <a href="#demo" class="secondary-button">
+                    See Live Demo <i class="fas fa-play"></i>
+                </a>
+            </div>
+            <div class="stats-bar fade-in delay-4">
+                <div class="stat">
+                    <div class="stat-value">25+</div>
+                    <div class="stat-label">Nutrients</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">&lt;100ms</div>
+                    <div class="stat-label">Response Time</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">1,000</div>
+                    <div class="stat-label">Free Calls/Month</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">USDA</div>
+                    <div class="stat-label">Data Source</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo">
+        <div class="section-header">
+            <h2>See It In Action</h2>
+            <p>Natural language in. Complete nutrition data out. It's that simple.</p>
+        </div>
+        <div class="demo-section">
+            <div class="demo-grid">
+                <div class="demo-input">
+                    <h3>📥 Your Request</h3>
+                    <div class="code-block">
+                        <pre><span class="json-key">POST</span> /v1/calculate/natural
+
+{
+  <span class="json-key">"text"</span>: <span class="json-string">"100g grilled chicken breast"</span>
+}</pre>
+                    </div>
+                </div>
+                <div class="demo-output">
+                    <h3>📤 API Response (25 nutrients!)</h3>
+                    <div class="code-block">
+                        <pre><span class="json-bracket">{</span>
+  <span class="json-key">"Energy"</span>: <span class="json-number">156</span> kcal,
+  <span class="json-key">"Protein"</span>: <span class="json-number">31.02</span>g,
+  <span class="json-key">"Fat"</span>: <span class="json-number">3.57</span>g <span class="json-string">(with breakdown!)</span>,
+  <span class="json-key">"Vitamin B-6"</span>: <span class="json-number">0.6</span>mg,
+  <span class="json-key">"Vitamin B-12"</span>: <span class="json-number">0.34</span>µg,
+  <span class="json-key">"Iron"</span>: <span class="json-number">1.04</span>mg,
+  <span class="json-key">"Zinc"</span>: <span class="json-number">1.0</span>mg,
+  <span class="json-key">"Calcium"</span>: <span class="json-number">15</span>mg,
+  <span class="json-string">...and 17 more nutrients</span>
+<span class="json-bracket">}</span></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features">
+        <div class="section-header">
+            <h2>Why Developers Choose Us</h2>
+            <p>Built by a developer who was tired of paying $50/month for basic nutrition data.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🧬</div>
+                <h3>25+ Nutrients in Free Tier</h3>
+                <p>Protein, carbs, fats, 13 vitamins, 10 minerals. Most APIs lock this behind premium plans.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3>Natural Language Input</h3>
+                <p>Send "100g chicken and 1 cup rice" - we parse it. No need to build your own food parser.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>&lt;100ms Response Time</h3>
+                <p>Multi-layer edge caching. 5,000 popular foods indexed for instant lookup.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🍽️</div>
+                <h3>Multi-Item Meals</h3>
+                <p>Calculate entire meals in one request. Up to 10 items per call on Business tier.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔬</div>
+                <h3>Hierarchical Fat Breakdown</h3>
+                <p>Industry first: Saturated + mono + poly + trans + other = total. Math that works.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏛️</div>
+                <h3>USDA Data Source</h3>
+                <p>Same peer-reviewed, laboratory-analyzed database used by MyFitnessPal & Cronometer.</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <div class="fat-breakdown">
+            <div class="section-header">
+                <h2>Fat Breakdown That Actually Adds Up</h2>
+                <p>No more mysterious "missing" fat in your calculations.</p>
+            </div>
+            <div class="fat-bar">
+                <div class="fat-segment fat-saturated">1.01g</div>
+                <div class="fat-segment fat-mono">1.24g</div>
+                <div class="fat-segment fat-poly">0.77g</div>
+                <div class="fat-segment fat-other">0.55g</div>
+            </div>
+            <div class="fat-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Saturated (1.01g)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f59e0b;"></div>
+                    <span>Monounsaturated (1.24g)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <span>Polyunsaturated (0.77g)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #6366f1;"></div>
+                    <span>Other* (0.55g)</span>
+                </div>
+            </div>
+            <p style="text-align: center; color: var(--gray); margin-top: 1.5rem; font-size: 0.875rem;">
+                *Includes phospholipids, sterols, and minor fatty acids. Total: 3.57g ✓
+            </p>
+        </div>
+    </section>
+
+    <section id="compare">
+        <div class="section-header">
+            <h2>How We Compare</h2>
+            <p>More nutrients. Better pricing. Faster responses.</p>
+        </div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>NutritionAPI</th>
+                    <th>Competitors</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Nutrients in Free Tier</td>
+                    <td class="highlight-cell">25+</td>
+                    <td>5-10 (paywalled)</td>
+                </tr>
+                <tr>
+                    <td>Protein in Free Tier</td>
+                    <td><i class="fas fa-check check"></i> Yes</td>
+                    <td><i class="fas fa-times cross"></i> Often locked</td>
+                </tr>
+                <tr>
+                    <td>Vitamins & Minerals</td>
+                    <td><i class="fas fa-check check"></i> All 23</td>
+                    <td><i class="fas fa-times cross"></i> Premium only</td>
+                </tr>
+                <tr>
+                    <td>Natural Language Input</td>
+                    <td><i class="fas fa-check check"></i> Built-in</td>
+                    <td><i class="fas fa-times cross"></i> You build</td>
+                </tr>
+                <tr>
+                    <td>Multi-Item Meals</td>
+                    <td><i class="fas fa-check check"></i> Up to 10</td>
+                    <td><i class="fas fa-times cross"></i> Limited</td>
+                </tr>
+                <tr>
+                    <td>Response Time</td>
+                    <td class="highlight-cell">&lt;100ms</td>
+                    <td>500ms+</td>
+                </tr>
+                <tr>
+                    <td>Fat Breakdown</td>
+                    <td><i class="fas fa-check check"></i> Hierarchical</td>
+                    <td><i class="fas fa-times cross"></i> Total only</td>
+                </tr>
+                <tr>
+                    <td>Data Source</td>
+                    <td><i class="fas fa-check check"></i> USDA (verified)</td>
+                    <td><i class="fas fa-question" style="color: var(--accent);"></i> Unknown</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <div class="usda-section">
+            <h2>🏛️ Powered by USDA FoodData Central</h2>
+            <p style="color: var(--gray); margin-top: 1rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                The same peer-reviewed, laboratory-analyzed database trusted by millions of users worldwide.
+            </p>
+            <div class="usda-logos">
+                <div class="usda-logo">📱 MyFitnessPal</div>
+                <div class="usda-logo">📊 Cronometer</div>
+                <div class="usda-logo">🍎 Nutritionix</div>
+                <div class="usda-logo">🥗 NutritionAPI</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <div class="section-header">
+            <h2>Simple, Transparent Pricing</h2>
+            <p>Start free. Scale as you grow. Same 25+ nutrients on every tier.</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-name">Free</div>
+                <div class="pricing-price">$0<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 1,000 API calls/month</li>
+                    <li><i class="fas fa-check"></i> 2 items per request</li>
+                    <li><i class="fas fa-check"></i> All 25+ nutrients</li>
+                    <li><i class="fas fa-check"></i> Natural language input</li>
+                    <li><i class="fas fa-check"></i> USDA data</li>
+                </ul>
+                <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button"
+                    style="width: 100%; justify-content: center;" target="_blank">
+                    Get Started Free
+                </a>
+            </div>
+            <div class="pricing-card popular">
+                <div class="pricing-name">Starter</div>
+                <div class="pricing-price">$30<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 50,000 API calls/month</li>
+                    <li><i class="fas fa-check"></i> 5 items per request</li>
+                    <li><i class="fas fa-check"></i> All 25+ nutrients</li>
+                    <li><i class="fas fa-check"></i> Priority support</li>
+                    <li><i class="fas fa-check"></i> Multi-item aggregation</li>
+                </ul>
+                <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button"
+                    style="width: 100%; justify-content: center;" target="_blank">
+                    Start Building
+                </a>
+            </div>
+            <div class="pricing-card">
+                <div class="pricing-name">Business</div>
+                <div class="pricing-price">$50<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> 100,000 API calls/month</li>
+                    <li><i class="fas fa-check"></i> 10 items per request</li>
+                    <li><i class="fas fa-check"></i> All 25+ nutrients</li>
+                    <li><i class="fas fa-check"></i> Priority support</li>
+                    <li><i class="fas fa-check"></i> Full meal tracking</li>
+                </ul>
+                <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button"
+                    style="width: 100%; justify-content: center;" target="_blank">
+                    Scale Up
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <h2>Ready to Ship Your Nutrition Feature?</h2>
+        <p>Join developers who chose simplicity over complexity.</p>
+        <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" class="cta-button big-cta"
+            target="_blank">
+            Get Your Free API Key <i class="fas fa-arrow-right"></i>
+        </a>
+    </section>
+
+    <footer>
+        <div class="footer-links">
+            <a href="https://rapidapi.com/anonymous617461746174/api/nutrition-tracker-api" target="_blank">RapidAPI</a>
+            <a href="#demo">Documentation</a>
+            <a href="#pricing">Pricing</a>
+        </div>
+        <p class="copyright">
+            © 2024 Nutrition Tracker API. Built with ❤️ for developers.
+        </p>
+    </footer>
+
+    <script>
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
