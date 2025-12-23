@@ -1,0 +1,7 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".",
+  "env": {
+    "VERCEL_ANALYTICS_ID": "@auto"
+  }
+}

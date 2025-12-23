@@ -1,0 +1,22 @@
+{
+  "name": "nutrition-api-web",
+  "version": "1.0.0",
+  "description": "The nutrition API that gives you 25+ nutrients in the free tier. Natural language input, USDA data, hierarchical fat breakdown. Built for developers.",
+  "type": "module",
+  "scripts": {
+    "dev": "http-server",
+    "build": "echo 'Static site - no build needed'",
+    "start": "http-server"
+  },
+  "keywords": [
+    "nutrition",
+    "api",
+    "nutrients",
+    "health"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
